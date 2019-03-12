@@ -20,6 +20,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+#include <GameObject.h>
+
 using namespace std;
 using namespace sf;
 using namespace glm;
@@ -32,6 +34,7 @@ public:
 	~Game();
 	void run();
 private:
+	GameObject* game_object[2];
 	RenderWindow window;
 	Clock clock;
 	Time time;

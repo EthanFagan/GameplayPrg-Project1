@@ -1,5 +1,5 @@
 #include <Game.h>
-#include <Player.h>
+#include <Cube.h>
 #include <Easing.h>
 
 // Helper to convert Number to String for HUD
@@ -58,9 +58,16 @@ Game::Game(sf::ContextSettings settings) :
 	sf::Style::Default, 
 	settings)
 {
+	game_object[0] = new GameObject();
+	game_object[0]->setPosition(vec3(0.5f, 0.5f, -10.0f));
+
+	game_object[1] = new GameObject();
+	game_object[1]->setPosition(vec3(0.8f, 0.8f, -6.0f));
 }
 
-Game::~Game(){}
+Game::~Game()
+{
+}
 
 
 void Game::run()
@@ -194,8 +201,6 @@ void Game::initialize()
 	GLint isCompiled = 0;
 	GLint isLinked = 0;
 
-	Player m_player;
-
 	if (!(!glewInit())) { DEBUG_MSG("glewInit() failed"); }
 
 	// Copy UV's to all faces
@@ -211,11 +216,18 @@ void Game::initialize()
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
 	// Vertices (3) x,y,z , Colors (4) RGBA, UV/ST (2)
+
+	int countVERTICES = game_object[0]->getVertexCount();
+	int countCOLORS = game_object[0]->getColorCount();
+	int countUVS = game_object[0]->getUVCount();
+
 	glBufferData(GL_ARRAY_BUFFER, ((3 * VERTICES) + (4 * COLORS) + (2 * UVS)) * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
 
 	glGenBuffers(1, &vib); //Generate Vertex Index Buffer
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vib);
 
+
+	int countINDICES = game_object[0]->getIndexCount();
 	// Indices to be drawn
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * INDICES * sizeof(GLuint), indices, GL_STATIC_DRAW);
 
@@ -417,7 +429,7 @@ void Game::render()
 
 	Text text(hud, font);
 
-	text.setColor(sf::Color(255, 255, 255, 170));
+	text.setFillColor(sf::Color(255, 255, 255, 170));
 	text.setPosition(50.f, 50.f);
 
 	window.draw(text);
@@ -461,7 +473,10 @@ void Game::render()
 	if (z_offsetID < 0) { DEBUG_MSG("z_offsetID not found"); };
 
 	// VBO Data....vertices, colors and UV's appended
-	glBufferSubData(GL_ARRAY_BUFFER, 0 * VERTICES * sizeof(GLfloat), 3 * VERTICES * sizeof(GLfloat), vertices);
+	// Add the Vertices for all your GameOjects, Colors and UVS
+	
+	glBufferSubData(GL_ARRAY_BUFFER, 0 * VERTICES * sizeof(GLfloat), 3 * VERTICES * sizeof(GLfloat), game_object[0]->getVertex());
+	//glBufferSubData(GL_ARRAY_BUFFER, 0 * VERTICES * sizeof(GLfloat), 3 * VERTICES * sizeof(GLfloat), vertices);
 	glBufferSubData(GL_ARRAY_BUFFER, 3 * VERTICES * sizeof(GLfloat), 4 * COLORS * sizeof(GLfloat), colors);
 	glBufferSubData(GL_ARRAY_BUFFER, ((3 * VERTICES) + (4 * COLORS)) * sizeof(GLfloat), 2 * UVS * sizeof(GLfloat), uvs);
 
@@ -474,9 +489,14 @@ void Game::render()
 
 	// Set the X, Y and Z offset (this allows for multiple cubes via different shaders)
 	// Experiment with these values to change screen positions
-	glUniform1f(x_offsetID, 0.00f);
+
+	glUniform1f(x_offsetID, game_object[0]->getPosition().x);
+	glUniform1f(y_offsetID, game_object[0]->getPosition().y);
+	glUniform1f(z_offsetID, game_object[0]->getPosition().z);
+
+	/*glUniform1f(x_offsetID, 0.00f);
 	glUniform1f(y_offsetID, 0.00f);
-	glUniform1f(z_offsetID, 0.00f);
+	glUniform1f(z_offsetID, 0.00f);*/
 
 	// Set pointers for each parameter (with appropriate starting positions)
 	// https://www.khronos.org/opengles/sdk/docs/man/xhtml/glVertexAttribPointer.xml
