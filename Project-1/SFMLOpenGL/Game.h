@@ -26,6 +26,8 @@ using namespace std;
 using namespace sf;
 using namespace glm;
 
+const int MAX_CUBES = 2;
+
 class Game
 {
 public:
@@ -34,7 +36,7 @@ public:
 	~Game();
 	void run();
 private:
-	GameObject* game_object[2];
+	GameObject* game_object[MAX_CUBES];
 	RenderWindow window;
 	Clock clock;
 	Time time;
