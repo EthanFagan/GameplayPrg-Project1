@@ -194,6 +194,8 @@ void Game::run()
 		}
 		else
 		{
+			gameOverText.setString("G A M E  O V E R \n press R to restart");
+			gameOverText.setPosition(400,400);
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::R))
 			{
 					resetGame();
@@ -294,6 +296,8 @@ void Game::initialize()
 {
 	text.setFont(font);
 	healthText.setFont(font);
+	cameraChangeText.setFont(font);
+	gameOverText.setFont(font);
 	isRunning = true;
 	GLint isCompiled = 0;
 	GLint isLinked = 0;
@@ -507,7 +511,20 @@ void Game::update()
 	}
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::C))
 	{
-		changeCamera();
+		if (cameraChangeTimer == -1)
+		{
+			changeCamera();
+			cameraChangeTimer = 0.0f;
+		}
+		else
+		{
+			cameraChangeTimer += 0.01;
+		}
+
+		if (cameraChangeTimer >= 1.0)
+		{
+			cameraChangeTimer = -1;
+		}
 	}
 	if (!cameraView)
 	{
@@ -562,6 +579,10 @@ void Game::render()
 
 	text.setString("P O I N T S : [  " + std::to_string(points) + "  ]");
 	healthText.setString("Hits remaining: [" + std::to_string(health) + "]");
+	cameraChangeText.setString("Press C to change the camera angle\nPress SPACE to jump");
+	cameraChangeText.setScale(0.5,0.5);
+	cameraChangeText.setFillColor(sf::Color::Magenta);
+	cameraChangeText.setPosition(10.f, 100.f);
 
 	text.setFillColor(sf::Color::Magenta);
 	text.setPosition(10.f, 40.f);
@@ -576,9 +597,14 @@ void Game::render()
 		healthText.setPosition(10.f, 70.0f);
 	}
 
-
+	if (gameOver)
+	{
+		window.draw(gameOverText);
+	}
+	
 	window.draw(text);
 	window.draw(healthText);
+	window.draw(cameraChangeText);
 	// Restore OpenGL render states
 	// https://www.sfml-dev.org/documentation/2.0/classsf_1_1RenderTarget.php#a8d1998464ccc54e789aaf990242b47f7
 

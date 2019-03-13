@@ -56,11 +56,14 @@ public:
 	void resetGame();
 
 	float invincibilityTimer = 0.0f;
+	float cameraChangeTimer = -1.0f;
 
 	bool gameOver = false;
 
 	Text text;
 	Text healthText;
+	Text cameraChangeText;
+	Text gameOverText;
 
 	bool invincible = false;
 	bool jumping = false;
