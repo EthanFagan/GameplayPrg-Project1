@@ -65,10 +65,10 @@ Game::Game(sf::ContextSettings settings) :
 	game_object[1]->setPosition(vec3(0.5f, 0.5f, -14.0f));
 
 	game_object[2] = new GameObject();
-	game_object[2]->setPosition(vec3(0.5f, 0.5f, -18.0f));
+	game_object[2]->setPosition(vec3(0.5f, 0.5f, -24.0f));
 
 	game_object[3] = new GameObject();
-	game_object[3]->setPosition(vec3(0.5f, 0.5f, -22.0f));
+	game_object[3]->setPosition(vec3(0.5f, 0.5f, -34.0f));
 
 	game_object[4] = new GameObject();
 	game_object[4]->setPosition(vec3(50.0f, 50.0f, 50.0f));
@@ -92,15 +92,19 @@ void Game::changeCamera()
 
 void Game::moveObstacles()
 {
-	for (int i = 1; i < MAX_CUBES; i++)
+	for (int i = 1; i < MAX_CUBES -1; i++)
 	{
 		if (game_object[i]->getPosition().z > 14.0)
 		{
+			if (i == 3)
+			{
+				points++;
+			}
 			game_object[i]->setPosition(vec3{ 0.5f, 0.5f, -30.0f });
 		}
 		else
 		{
-			game_object[i]->setPosition(game_object[i]->getPosition() + vec3{ 0.0,0.0,0.01 });
+			game_object[i]->setPosition(game_object[i]->getPosition() + vec3{ 0.0,0.0,0.02 });
 		}
 		
 	}
@@ -130,7 +134,6 @@ void Game::run()
 			{
 				isRunning = false;
 			}
-
 			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
 			{
 				// Set Model Rotation
@@ -184,7 +187,19 @@ void Game::run()
 				animate = false;
 			}
 		}
-		update();
+
+		if (!gameOver)
+		{
+			update();
+		}
+		else
+		{
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::R))
+			{
+					resetGame();
+			}
+		}
+		
 		render();
 	}
 
@@ -197,21 +212,88 @@ void Game::run()
 
 void Game::collision()
 {
-	for (int i = 1; i < MAX_CUBES - 1; i++)
+	if (!invincible)
 	{
-		if (game_object[0]->getPosition().z - 2 < game_object[i]->getPosition().z &&
-			game_object[0]->getPosition().z > game_object[i]->getPosition().z - 2 &&
-			game_object[0]->getPosition().y - 2 < game_object[i]->getPosition().y &&
-			game_object[0]->getPosition().y > game_object[i]->getPosition().y - 2
-			)
+		for (int i = 1; i < MAX_CUBES - 1; i++)
 		{
-			std::cout << "heeeeeelp" << std::endl;
+			if (game_object[0]->getPosition().z - 2 < game_object[i]->getPosition().z &&
+				game_object[0]->getPosition().z > game_object[i]->getPosition().z - 2 &&
+				game_object[0]->getPosition().y - 2 < game_object[i]->getPosition().y &&
+				game_object[0]->getPosition().y > game_object[i]->getPosition().y - 2
+				)
+			{
+				health--;
+				invincible = true;
+			}
+		}
+	}
+	else
+	{
+		invincibilityTimer += 0.001f;
+		if (invincibilityTimer >= 1)
+		{
+			invincible = false;
+			invincibilityTimer = 0.0f;
 		}
 	}
 }
 
+void Game::movePlayer()
+{
+	if (jumping)
+	{
+		if (game_object[0]->getPosition().y < 7)
+		{
+			game_object[0]->setPosition(game_object[0]->getPosition() + vec3{ 0.0f,0.03f,0.0f });
+		}
+		else
+		{
+			jumping = false;
+			falling = true;
+		}
+	}
+	
+	if (falling)
+	{
+		if (game_object[0]->getPosition().y > 0.5)
+		{
+			game_object[0]->setPosition(game_object[0]->getPosition() - vec3{ 0.0f,0.03f,0.0f });
+		}
+		else
+		{
+			falling = false;
+		}
+	}
+}
+
+void Game::resetGame()
+{
+	game_object[0] = new GameObject();
+	game_object[0]->setPosition(vec3(0.5f, 0.5f, 0.0f));
+
+	game_object[1] = new GameObject();
+	game_object[1]->setPosition(vec3(0.5f, 0.5f, -14.0f));
+
+	game_object[2] = new GameObject();
+	game_object[2]->setPosition(vec3(0.5f, 0.5f, -24.0f));
+
+	game_object[3] = new GameObject();
+	game_object[3]->setPosition(vec3(0.5f, 0.5f, -34.0f));
+
+	game_object[4] = new GameObject();
+	game_object[4]->setPosition(vec3(50.0f, 50.0f, 50.0f));
+
+	health = 5;
+	points = 0;
+	jumping = false;
+	falling = false;
+	gameOver = false;
+}
+
 void Game::initialize()
 {
+	text.setFont(font);
+	healthText.setFont(font);
 	isRunning = true;
 	GLint isCompiled = 0;
 	GLint isLinked = 0;
@@ -414,6 +496,15 @@ void Game::update()
 	DEBUG_MSG("Updating...");
 #endif
 
+
+	
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
+	{
+		if (!jumping && !falling)
+		{
+			jumping = true;
+		}
+	}
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::C))
 	{
 		changeCamera();
@@ -430,13 +521,14 @@ void Game::update()
 	{
 		
 		view = lookAt(
-			vec3(20.0f, 0.0f, 0.0f),	// Camera (x,y,z), in World Space
-			vec3(0.0f, 0.0f, 0.0f),		// Camera looking at origin
+			vec3(20.0f, 2.0f, 0.0f),	// Camera (x,y,z), in World Space
+			vec3(0.0f, 2.0f, 0.0f),		// Camera looking at origin
 			vec3(0.0f, 1.0f, 0.0f)		// 0.0f, 1.0f, 0.0f Look Down and 0.0f, -1.0f, 0.0f Look Up
 		);
 	}
 
 	moveObstacles();
+	movePlayer();
 	// Update Model View Projection
 	// For mutiple objects (cubes) create multiple models
 	// To alter Camera modify view & projection
@@ -445,6 +537,10 @@ void Game::update()
 		mvp[i] = projection * view * model[i];
 	}
 	collision();
+	if (health <= 0)
+	{
+		gameOver = true;
+	}
 }
 
 void Game::render()
@@ -464,15 +560,25 @@ void Game::render()
 	int x = Mouse::getPosition(window).x;
 	int y = Mouse::getPosition(window).y;
 
-	string hud = "P O I N T S : [" + std::to_string(points) + "]";
-
-	Text text(hud, font);
+	text.setString("P O I N T S : [  " + std::to_string(points) + "  ]");
+	healthText.setString("Hits remaining: [" + std::to_string(health) + "]");
 
 	text.setFillColor(sf::Color::Magenta);
 	text.setPosition(10.f, 40.f);
+	if (invincible)
+	{
+		healthText.setFillColor(sf::Color::Red);
+		healthText.setPosition(10.f, 70.0f);
+	}
+	else
+	{
+		healthText.setFillColor(sf::Color::Magenta);
+		healthText.setPosition(10.f, 70.0f);
+	}
+
 
 	window.draw(text);
-
+	window.draw(healthText);
 	// Restore OpenGL render states
 	// https://www.sfml-dev.org/documentation/2.0/classsf_1_1RenderTarget.php#a8d1998464ccc54e789aaf990242b47f7
 

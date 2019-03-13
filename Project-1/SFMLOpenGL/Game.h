@@ -34,10 +34,7 @@ public:
 	Game();
 	Game(sf::ContextSettings settings);
 	~Game();
-	void changeCamera();
-	void moveObstacles();
 	void run();
-	void collision();
  private:
 	GameObject* game_object[MAX_CUBES];
 	RenderWindow window;
@@ -52,8 +49,24 @@ public:
 	void update();
 	void render();
 	void unload();
+	void changeCamera();
+	void moveObstacles();
+	void collision();
+	void movePlayer();
+	void resetGame();
 
+	float invincibilityTimer = 0.0f;
+
+	bool gameOver = false;
+
+	Text text;
+	Text healthText;
+
+	bool invincible = false;
+	bool jumping = false;
+	bool falling = false;
 	int points = 0;
+	int health = 5;
 };
 
 #endif  // ! GAME_H
