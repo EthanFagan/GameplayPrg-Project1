@@ -26,7 +26,7 @@ using namespace std;
 using namespace sf;
 using namespace glm;
 
-const int MAX_CUBES = 2;
+const int MAX_CUBES = 5;
 
 class Game
 {
@@ -34,12 +34,16 @@ public:
 	Game();
 	Game(sf::ContextSettings settings);
 	~Game();
+	void changeCamera();
+	void moveObstacles();
 	void run();
-private:
+	void collision();
+ private:
 	GameObject* game_object[MAX_CUBES];
 	RenderWindow window;
 	Clock clock;
 	Time time;
+	bool cameraView = false;
 	bool animate = false;
 	vec3 animation = vec3(0.0f);
 	float rotation = 0.0f;
@@ -48,6 +52,8 @@ private:
 	void update();
 	void render();
 	void unload();
+
+	int points = 0;
 };
 
 #endif  // ! GAME_H

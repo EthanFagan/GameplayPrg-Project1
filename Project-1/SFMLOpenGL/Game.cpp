@@ -59,14 +59,51 @@ Game::Game(sf::ContextSettings settings) :
 	settings)
 {
 	game_object[0] = new GameObject();
-	game_object[0]->setPosition(vec3(0.5f, 0.5f, -10.0f));
+	game_object[0]->setPosition(vec3(0.5f, 0.5f, 0.0f));
 
 	game_object[1] = new GameObject();
-	game_object[1]->setPosition(vec3(0.8f, 0.8f, -6.0f));
+	game_object[1]->setPosition(vec3(0.5f, 0.5f, -14.0f));
+
+	game_object[2] = new GameObject();
+	game_object[2]->setPosition(vec3(0.5f, 0.5f, -18.0f));
+
+	game_object[3] = new GameObject();
+	game_object[3]->setPosition(vec3(0.5f, 0.5f, -22.0f));
+
+	game_object[4] = new GameObject();
+	game_object[4]->setPosition(vec3(50.0f, 50.0f, 50.0f));
 }
 
 Game::~Game()
 {
+}
+
+void Game::changeCamera()
+{
+	if (cameraView)
+	{
+		cameraView = false;
+	}
+	else if (!cameraView)
+	{
+		cameraView = true;
+	}
+}
+
+void Game::moveObstacles()
+{
+	for (int i = 1; i < MAX_CUBES; i++)
+	{
+		if (game_object[i]->getPosition().z > 14.0)
+		{
+			game_object[i]->setPosition(vec3{ 0.5f, 0.5f, -30.0f });
+		}
+		else
+		{
+			game_object[i]->setPosition(game_object[i]->getPosition() + vec3{ 0.0,0.0,0.01 });
+		}
+		
+	}
 }
 
 
@@ -137,45 +174,8 @@ void Game::run()
 				// https://www.youtube.com/watch?v=n_JSi6ihDFs
 				// http://en.sfml-dev.org/forums/index.php?topic=8010.0
 				// 
-
-				/*
-				// Set Model Rotation
-				// t = time, b = startvalue, c = change in value, d = duration:
-
-				time = clock.getElapsedTime();
-				std::cout << time.asSeconds() << std::endl;
-				float original = 0.001f;
-				float destination = 0.05f;
-
-				float factor, temp;
-
-				for (int t = 0; t < 5.0f; t++)
-				{
-				factor = gpp::Easing::easeIn(t, original, 0.00001f, 5.0f);
-				cout << "Factor : " << factor << endl;
-				}
-
-
-				factor = gpp::Easing::easeIn(time.asMilliseconds(), original, 0.00001f, 5.0f);
-				cout << "Factor : " << factor << endl;
-				temp = original + ((destination - original) * factor);
-				cout << "Temp : " << factor << endl;
-				model = rotate(model, temp, glm::vec3(0, 1, 0)); // Rotate
-				*/
 			}
-
-			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
-			{
-				// Set Model Rotation
-				model[0] = rotate(model[0], -0.01f, glm::vec3(1, 0, 0)); // Rotate
-			}
-
-			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
-			{
-				// Set Model Rotation
-				model[0] = rotate(model[0], 0.01f, glm::vec3(1, 0, 0)); // Rotate
-			}
-
+			
 			if (animate)
 			{
 				rotation += (1.0f * rotation) + 0.05f;
@@ -193,6 +193,21 @@ void Game::run()
 #endif
 	unload();
 
+}
+
+void Game::collision()
+{
+	for (int i = 1; i < MAX_CUBES - 1; i++)
+	{
+		if (game_object[0]->getPosition().z - 2 < game_object[i]->getPosition().z &&
+			game_object[0]->getPosition().z > game_object[i]->getPosition().z - 2 &&
+			game_object[0]->getPosition().y - 2 < game_object[i]->getPosition().y &&
+			game_object[0]->getPosition().y > game_object[i]->getPosition().y - 2
+			)
+		{
+			std::cout << "heeeeeelp" << std::endl;
+		}
+	}
 }
 
 void Game::initialize()
@@ -374,7 +389,7 @@ void Game::initialize()
 
 		// Camera Matrix
 		view = lookAt(
-			vec3(0.0f, 4.0f, 10.0f),	// Camera (x,y,z), in World Space
+			vec3(0.0f, 5.0f, 10.0f),	// Camera (x,y,z), in World Space
 			vec3(0.0f, 0.0f, 0.0f),		// Camera looking at origin
 			vec3(0.0f, 1.0f, 0.0f)		// 0.0f, 1.0f, 0.0f Look Down and 0.0f, -1.0f, 0.0f Look Up
 		);
@@ -398,6 +413,30 @@ void Game::update()
 #if (DEBUG >= 2)
 	DEBUG_MSG("Updating...");
 #endif
+
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::C))
+	{
+		changeCamera();
+	}
+	if (!cameraView)
+	{
+		view = lookAt(
+			vec3(10.0f, 5.0f, 10.0f),	// Camera (x,y,z), in World Space
+			vec3(0.0f, 0.0f, 0.0f),		// Camera looking at origin
+			vec3(0.0f, 1.0f, 0.0f)		// 0.0f, 1.0f, 0.0f Look Down and 0.0f, -1.0f, 0.0f Look Up
+		);
+	}
+	else if (cameraView)
+	{
+		
+		view = lookAt(
+			vec3(20.0f, 0.0f, 0.0f),	// Camera (x,y,z), in World Space
+			vec3(0.0f, 0.0f, 0.0f),		// Camera looking at origin
+			vec3(0.0f, 1.0f, 0.0f)		// 0.0f, 1.0f, 0.0f Look Down and 0.0f, -1.0f, 0.0f Look Up
+		);
+	}
+
+	moveObstacles();
 	// Update Model View Projection
 	// For mutiple objects (cubes) create multiple models
 	// To alter Camera modify view & projection
@@ -405,6 +444,7 @@ void Game::update()
 	{
 		mvp[i] = projection * view * model[i];
 	}
+	collision();
 }
 
 void Game::render()
@@ -424,16 +464,12 @@ void Game::render()
 	int x = Mouse::getPosition(window).x;
 	int y = Mouse::getPosition(window).y;
 
-	string hud = "Heads Up Display ["
-		+ string(toString(x))
-		+ "]["
-		+ string(toString(y))
-		+ "]";
+	string hud = "P O I N T S : [" + std::to_string(points) + "]";
 
 	Text text(hud, font);
 
-	text.setFillColor(sf::Color(255, 255, 255, 170));
-	text.setPosition(50.f, 50.f);
+	text.setFillColor(sf::Color::Magenta);
+	text.setPosition(10.f, 40.f);
 
 	window.draw(text);
 
